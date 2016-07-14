@@ -33,6 +33,9 @@ const (
 
 	// ErrInvalidOptions is returned when options are invalid
 	ErrInvalidOptions = errors.Error("options are invalid")
+
+	// ErrInvalidLineNumber is returned when an invalid line number is provided
+	ErrInvalidLineNumber = errors.Error("invalid line number provided")
 )
 
 var (
@@ -279,8 +282,8 @@ END:
 // SeekToStart will seek the file to the start
 func (f *File) SeekToStart() (err error) {
 	f.mux.Lock()
-	if !f.closed {
-		err = ErrIsOpen
+	if f.closed {
+		err = ErrIsClosed
 		goto END
 	}
 
@@ -294,14 +297,54 @@ END:
 // SeekToEnd will seek the file to the end
 func (f *File) SeekToEnd() (err error) {
 	f.mux.Lock()
-	if !f.closed {
-		err = ErrIsOpen
+	if f.closed {
+		err = ErrIsClosed
 		goto END
 	}
 
 	_, err = f.f.Seek(0, os.SEEK_END)
 
 END:
+	f.mux.Unlock()
+	return
+}
+
+// SeekToLine will seek to line
+func (f *File) SeekToLine(n int) (err error) {
+	if n < 0 {
+		err = ErrInvalidLineNumber
+		return
+	}
+
+	curr := -1
+	f.mux.Lock()
+	if f.closed {
+		err = ErrIsClosed
+		goto END
+	}
+
+	if _, err = f.f.Seek(0, os.SEEK_SET); err != nil {
+		goto END
+	}
+
+READ:
+	if err = f.readLine(func(b *bytes.Buffer) {
+		curr++
+	}); err != nil {
+		goto END
+	}
+
+	if curr < n {
+		goto READ
+	}
+
+END:
+	if curr != n {
+		err = ErrLineNotFound
+	} else {
+		err = f.prevLine()
+	}
+
 	f.mux.Unlock()
 	return
 }

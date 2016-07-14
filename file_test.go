@@ -2,9 +2,13 @@ package lineFile
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
+	"io"
+	"os"
 	"testing"
 )
+
+var errInvalidValue = errors.New("invalid value")
 
 func TestBasic(t *testing.T) {
 	var (
@@ -30,40 +34,80 @@ func TestBasic(t *testing.T) {
 	f.prevLine()
 	f.prevLine()
 
-	f.ReadLine(func(rdr *bytes.Buffer) {
-		var a [16]byte
-		n, err := rdr.Read(a[:])
-		fmt.Println("Read!", n, err)
-		fmt.Println(string(a[:n]))
-	})
+	if err = read(f, "1"); err != nil {
+		t.Error(err)
+		return
+	}
 
-	f.ReadLine(func(rdr *bytes.Buffer) {
-		var a [16]byte
-		n, err := rdr.Read(a[:])
-		fmt.Println("Read!", n, err)
-		fmt.Println(string(a[:n]))
-	})
+	if err = read(f, "2"); err != nil {
+		t.Error(err)
+		return
+	}
 
-	f.ReadLine(func(rdr *bytes.Buffer) {
-		var a [16]byte
-		n, err := rdr.Read(a[:])
-		fmt.Println("Read!", n, err)
-		fmt.Println(string(a[:n]))
-	})
-
-	f.ReadLine(func(rdr *bytes.Buffer) {
-		var a [16]byte
-		n, err := rdr.Read(a[:])
-		fmt.Println("Read!", n, err)
-		fmt.Println(string(a[:n]))
-	})
+	if err = read(f, "3"); err != nil {
+		t.Error(err)
+		return
+	}
 
 	f.prevLine()
 	f.prevLine()
+	f.prevLine()
+
+	if err = read(f, "1"); err != nil {
+		t.Error(err)
+		return
+	}
+
+	f.nextLine()
+
+	if err = read(f, "3"); err != nil {
+		t.Error(err)
+		return
+	}
+
+	f.SeekToLine(0)
+	if err = read(f, "1"); err != nil {
+		t.Error(err)
+		return
+	}
+
+	f.SeekToLine(2)
+	if err = read(f, "3"); err != nil {
+		t.Error(err)
+		return
+	}
+
+	f.SeekToLine(1)
+	if err = read(f, "2"); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err = f.SeekToLine(10900); err != ErrLineNotFound {
+		t.Error("ErrLineNotFound is not returned when it should be")
+	}
+
+	f.Close()
+	os.Remove(f.Location())
+}
+
+func read(f *File, val string) (err error) {
 	f.ReadLine(func(rdr *bytes.Buffer) {
-		var a [16]byte
-		n, err := rdr.Read(a[:])
-		fmt.Println("Read!", n, err)
-		fmt.Println(string(a[:n]))
+		var (
+			a [16]byte
+			n int
+		)
+
+		if n, err = rdr.Read(a[:]); err != nil {
+			if err == io.EOF {
+				err = nil
+			}
+		}
+
+		if string(a[:n]) != val {
+			err = errInvalidValue
+		}
 	})
+
+	return
 }
