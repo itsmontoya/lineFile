@@ -1,4 +1,4 @@
-# Line file [![GoDoc](https://godoc.org/github.com/itsmontoya/hippy?status.svg)](https://godoc.org/github.com/itsmontoya/hippy) ![Status](https://img.shields.io/badge/status-alpha-red.svg)
+# Line file [![GoDoc](https://godoc.org/github.com/itsmontoya/lineFile?status.svg)](https://godoc.org/github.com/itsmontoya/lineFile) ![Status](https://img.shields.io/badge/status-alpha-red.svg)
 Line file is a file management assistant for line-based operations
 
 ## Usage
