@@ -349,6 +349,36 @@ END:
 	return
 }
 
+// NextLine will position the file at the next line
+func (f *File) NextLine() (err error) {
+	f.mux.Lock()
+	if f.closed {
+		err = ErrIsClosed
+		goto END
+	}
+
+	err = f.nextLine()
+
+END:
+	f.mux.Unlock()
+	return
+}
+
+// PrevLine will position the file at the previous line
+func (f *File) PrevLine() (err error) {
+	f.mux.Lock()
+	if f.closed {
+		err = ErrIsClosed
+		goto END
+	}
+
+	err = f.prevLine()
+
+END:
+	f.mux.Unlock()
+	return
+}
+
 // WriteLine will write a line given a provided body
 func (f *File) WriteLine(b []byte) (err error) {
 	f.mux.Lock()
@@ -378,7 +408,7 @@ func (f *File) Flush() (err error) {
 	}
 
 	if err = f.buf.Flush(); err != nil {
-		return
+		goto END
 	}
 
 	err = f.f.Sync()
@@ -431,11 +461,11 @@ func (f *File) Close() (err error) {
 	}
 
 	if err = f.buf.Flush(); err != nil {
-		return
+		goto END
 	}
 
 	if err = f.f.Close(); err != nil {
-		return
+		goto END
 	}
 
 	f.f = nil

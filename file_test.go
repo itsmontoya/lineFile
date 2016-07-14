@@ -30,9 +30,9 @@ func TestBasic(t *testing.T) {
 	f.WriteLine([]byte("3"))
 	f.Flush()
 
-	f.prevLine()
-	f.prevLine()
-	f.prevLine()
+	f.PrevLine()
+	f.PrevLine()
+	f.PrevLine()
 
 	if err = read(f, "1"); err != nil {
 		t.Error(err)
@@ -49,16 +49,16 @@ func TestBasic(t *testing.T) {
 		return
 	}
 
-	f.prevLine()
-	f.prevLine()
-	f.prevLine()
+	f.PrevLine()
+	f.PrevLine()
+	f.PrevLine()
 
 	if err = read(f, "1"); err != nil {
 		t.Error(err)
 		return
 	}
 
-	f.nextLine()
+	f.NextLine()
 
 	if err = read(f, "3"); err != nil {
 		t.Error(err)
