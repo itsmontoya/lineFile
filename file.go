@@ -431,16 +431,48 @@ func (f *File) ReadLine(fn func(*bytes.Buffer)) (err error) {
 func (f *File) ReadLines(fn func(*bytes.Buffer) bool) (err error) {
 	var end bool
 	f.mux.Lock()
+	if f.closed {
+		err = ErrIsClosed
+		goto END
+	}
+
 	for err == nil && !end {
 		err = f.readLine(func(b *bytes.Buffer) {
 			end = fn(b)
 		})
 	}
-	f.mux.Unlock()
 
+END:
+	f.mux.Unlock()
 	if err == io.EOF {
 		err = nil
 	}
+	return
+}
+
+// Append will append target file (f) with a provided file (nf)
+func (f *File) Append(nf *File) (err error) {
+	f.mux.Lock()
+	nf.mux.Lock()
+	if f.closed {
+		err = ErrIsClosed
+		goto END
+	}
+
+	if nf.closed {
+		err = ErrIsClosed
+		goto END
+	}
+
+	if _, err = f.f.Seek(0, os.SEEK_END); err != nil {
+		return
+	}
+
+	_, err = io.Copy(f.f, nf.f)
+
+END:
+	f.mux.Unlock()
+	nf.mux.Unlock()
 	return
 }
 
