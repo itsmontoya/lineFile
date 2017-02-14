@@ -22,6 +22,13 @@ const (
 )
 
 const (
+	// SyncBackend is for synchronous backends
+	SyncBackend uint8 = iota
+	// AsyncBackend is for asychronous backends
+	AsyncBackend
+)
+
+const (
 	// ErrLineNotFound is returned when a line is not found while calling SeekNextLine
 	ErrLineNotFound = errors.Error("line not found")
 
@@ -36,6 +43,9 @@ const (
 
 	// ErrInvalidLineNumber is returned when an invalid line number is provided
 	ErrInvalidLineNumber = errors.Error("invalid line number provided")
+
+	// ErrInvalidBackend is returned when an invalid backend option is set in the options
+	ErrInvalidBackend = errors.Error("invalid backend option provided")
 )
 
 var (
@@ -56,6 +66,17 @@ func New(o Opts) (f *File, err error) {
 		closed: true, // This will be set to false by f.Open
 	}
 
+	switch o.Backend {
+	case SyncBackend:
+		f.of = getOS
+	case AsyncBackend:
+		f.of = getAIO
+	default:
+		f = nil
+		err = ErrInvalidBackend
+		return
+	}
+
 	// If NoSet option is set to true, return early
 	if o.NoSet {
 		return
@@ -69,6 +90,8 @@ func New(o Opts) (f *File, err error) {
 type File struct {
 	mux sync.Mutex
 
+	of OpenFunc
+
 	// File location (path, name, and extension )
 	fLoc string
 
@@ -76,7 +99,7 @@ type File struct {
 	seekBuf [seekerBufSize]byte
 
 	// File
-	f *os.File
+	f FileInt
 	// Write buffer
 	buf *bufio.Writer
 
@@ -267,7 +290,7 @@ func (f *File) Open() (err error) {
 	}
 
 	// Open persistance file
-	if f.f, err = os.OpenFile(f.fLoc, os.O_CREATE|os.O_RDWR, 0644); err != nil {
+	if f.f, err = f.of(f.fLoc, os.O_CREATE|os.O_RDWR, 0644); err != nil {
 		goto END
 	}
 

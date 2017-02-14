@@ -11,6 +11,8 @@ type Opts struct {
 	Name string
 	Ext  string
 
+	Backend uint8 // Will default to SyncBackend if empty
+
 	NoSet bool // If set to true, will avoid setting file when calling New
 }
 
@@ -45,4 +47,16 @@ func getNewlineIndex(s []byte) (idx int) {
 	}
 
 	return -1
+}
+
+// OpenFunc is the func which produces FileInts
+type OpenFunc func(name string, flag int, perm os.FileMode) (FileInt, error)
+
+// FileInt is a file interface
+type FileInt interface {
+	Seek(offset int64, whence int) (ret int64, err error)
+	Read(b []byte) (n int, err error)
+	Write(b []byte) (n int, err error)
+	Sync() error
+	Close() error
 }
