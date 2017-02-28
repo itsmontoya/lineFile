@@ -10,6 +10,8 @@ import (
 
 	"github.com/missionMeteora/toolkit/bufferPool"
 	"github.com/missionMeteora/toolkit/errors"
+
+	"github.com/itsmontoya/async/file"
 )
 
 const (
@@ -68,9 +70,9 @@ func New(o Opts) (f *File, err error) {
 
 	switch o.Backend {
 	case SyncBackend:
-		f.of = getOS
+		f.of = file.GetOS
 	case AsyncBackend:
-		f.of = getAIO
+		f.of = file.GetAsync
 	default:
 		f = nil
 		err = ErrInvalidBackend
@@ -90,7 +92,7 @@ func New(o Opts) (f *File, err error) {
 type File struct {
 	mux sync.Mutex
 
-	of OpenFunc
+	of file.OpenFunc
 
 	// File location (path, name, and extension )
 	fLoc string
@@ -99,7 +101,7 @@ type File struct {
 	seekBuf [seekerBufSize]byte
 
 	// File
-	f FileInt
+	f file.Interface
 	// Write buffer
 	buf *bufio.Writer
 
