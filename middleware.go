@@ -27,7 +27,7 @@ func (rcs readClosers) Close() error {
 			continue
 		}
 
-		errs = errs.Append(rc.Close())
+		errs.Push(rc.Close())
 	}
 
 	return errs.Err()
@@ -42,7 +42,7 @@ func (wcs writeClosers) Close() error {
 			continue
 		}
 
-		errs = errs.Append(wc.Close())
+		errs.Push(wc.Close())
 	}
 
 	return errs.Err()
